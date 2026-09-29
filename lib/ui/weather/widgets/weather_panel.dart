@@ -5,8 +5,6 @@ import 'package:flutter_training/domain/models/weather_condition.dart';
 import 'package:flutter_training/ui/weather/widgets/temperature_labels.dart';
 
 /// 正方形の天気表示と、その下の気温ラベル。
-///
-/// [condition] が null の間は [Placeholder] を出す。
 class WeatherPanel extends StatelessWidget {
   const WeatherPanel({required this.condition, super.key});
 
@@ -27,6 +25,7 @@ class WeatherPanel extends StatelessWidget {
       children: [
         AspectRatio(
           aspectRatio: 1,
+          // 未取得、または取得できなかったときは Placeholder を出す。
           child: condition == null
               ? const Placeholder()
               : SvgPicture.asset(condition.imagePath),

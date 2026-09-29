@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 class ActionButtons extends StatelessWidget {
   const ActionButtons({required this.onReload, super.key});
 
-  /// Reload がタップされたときに呼ばれる。
   final VoidCallback onReload;
 
   @override
