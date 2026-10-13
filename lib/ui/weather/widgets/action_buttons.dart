@@ -3,14 +3,21 @@ import 'package:flutter/material.dart';
 
 /// 天気の再取得などを行うボタン列。配置は親のレイアウトが決める。
 class ActionButtons extends StatelessWidget {
-  const ActionButtons({required this.onReload, super.key});
+  const ActionButtons({
+    required this.onClose,
+    required this.onReload,
+    super.key,
+  });
 
+  final VoidCallback onClose;
   final VoidCallback onReload;
 
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(properties);
-    properties.add(ObjectFlagProperty<VoidCallback>.has('onReload', onReload));
+    properties
+      ..add(ObjectFlagProperty<VoidCallback>.has('onClose', onClose))
+      ..add(ObjectFlagProperty<VoidCallback>.has('onReload', onReload));
   }
 
   @override
@@ -19,7 +26,7 @@ class ActionButtons extends StatelessWidget {
       children: [
         Expanded(
           child: TextButton(
-            onPressed: () {},
+            onPressed: onClose,
             child: const Text('Close'),
           ),
         ),
