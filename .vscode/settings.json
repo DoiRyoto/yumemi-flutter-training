@@ -1,10 +1,7 @@
 {
-  "dart.flutterSdkPath": ".fvm/versions/3.47.3",
-  "search.exclude": {
-    "**/.fvm": true
-  },
-  "files.watcherExclude": {
-    "**/.fvm": true
+  "dart.getFlutterSdkCommand": {
+    "executable": "sh",
+    "args": ["-c", "echo \"$(mise where flutter)/flutter\""]
   },
   "cSpell.ignoreWords": ["yumemi"]
 }
