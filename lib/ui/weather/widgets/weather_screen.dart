@@ -3,6 +3,7 @@ import 'package:flutter_training/data/repositories/weather_repository.dart';
 import 'package:flutter_training/domain/models/weather_condition.dart';
 import 'package:flutter_training/ui/weather/widgets/action_buttons.dart';
 import 'package:flutter_training/ui/weather/widgets/weather_panel.dart';
+import 'package:go_router/go_router.dart';
 
 /// 天気予報の画面。
 class WeatherScreen extends StatefulWidget {
@@ -32,7 +33,10 @@ class _WeatherScreenState extends State<WeatherScreen> {
           ),
           LayoutId(
             id: _Slot.buttons,
-            child: ActionButtons(onReload: _reload),
+            child: ActionButtons(
+              onClose: () => context.pop(),
+              onReload: _reload,
+            ),
           ),
         ],
       ),
