@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_training/data/repositories/weather_repository.dart';
 import 'package:flutter_training/ui/weather/widgets/weather_panel.dart';
 import 'package:flutter_training/ui/weather/widgets/weather_screen.dart';
+import 'package:yumemi_weather/yumemi_weather.dart';
 
-Future<void> _pumpWeatherScreen(WidgetTester tester, {Size? size}) async {
+import '../../../helpers/fake_yumemi_weather.dart';
+
+/// [results] は Reload をタップするたびに API が返すものを、順に並べる。
+Future<void> _pumpWeatherScreen(
+  WidgetTester tester, {
+  Size? size,
+  List<Object> results = const ['sunny'],
+}) async {
   if (size != null) {
     tester.view
       ..physicalSize = size
@@ -12,7 +21,13 @@ Future<void> _pumpWeatherScreen(WidgetTester tester, {Size? size}) async {
     addTearDown(tester.view.reset);
   }
 
-  await tester.pumpWidget(const MaterialApp(home: WeatherScreen()));
+  await tester.pumpWidget(
+    MaterialApp(
+      home: WeatherScreen(
+        repository: WeatherRepository(client: FakeYumemiWeather(results)),
+      ),
+    ),
+  );
 }
 
 Future<void> _tapReload(WidgetTester tester) async {
@@ -36,6 +51,59 @@ void main() {
 
     expect(find.byType(Placeholder), findsNothing);
     expect(find.byType(SvgPicture), findsOneWidget);
+  });
+
+  group('API のエラー', () {
+    testWidgets('エラーになるとダイアログで理由を伝える', (tester) async {
+      await _pumpWeatherScreen(
+        tester,
+        size: phone,
+        results: [YumemiWeatherError.unknown],
+      );
+      await _tapReload(tester);
+
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(find.text('時間をおいて、もう一度お試しください。'), findsOneWidget);
+    });
+
+    testWidgets('エラーの種類に応じてメッセージを変える', (tester) async {
+      await _pumpWeatherScreen(
+        tester,
+        size: phone,
+        results: [YumemiWeatherError.invalidParameter],
+      );
+      await _tapReload(tester);
+
+      expect(find.text('地域の指定が正しくありません。'), findsOneWidget);
+    });
+
+    testWidgets('OK をタップするとダイアログを閉じる', (tester) async {
+      await _pumpWeatherScreen(
+        tester,
+        size: phone,
+        results: [YumemiWeatherError.unknown],
+      );
+      await _tapReload(tester);
+
+      await tester.tap(find.widgetWithText(TextButton, 'OK'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AlertDialog), findsNothing);
+    });
+
+    testWidgets('エラーになっても表示中の天気は残す', (tester) async {
+      await _pumpWeatherScreen(
+        tester,
+        size: phone,
+        results: ['sunny', YumemiWeatherError.unknown],
+      );
+      await _tapReload(tester);
+      await _tapReload(tester);
+      await tester.tap(find.widgetWithText(TextButton, 'OK'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SvgPicture), findsOneWidget);
+    });
   });
 
   group('天気の画像を表示してもレイアウトが崩れない', () {
