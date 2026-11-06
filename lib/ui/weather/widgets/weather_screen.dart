@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_training/data/repositories/weather_repository.dart';
-import 'package:flutter_training/domain/models/weather_condition.dart';
-import 'package:flutter_training/domain/models/weather_error.dart';
+import 'package:flutter_training/domain/models/weather.dart';
 import 'package:flutter_training/ui/weather/widgets/action_buttons.dart';
 import 'package:flutter_training/ui/weather/widgets/weather_error_dialog.dart';
 import 'package:flutter_training/ui/weather/widgets/weather_panel.dart';
+import 'package:flutter_training/utils/result.dart';
 import 'package:go_router/go_router.dart';
 
 /// 天気予報の画面。
@@ -32,20 +32,20 @@ class WeatherScreen extends StatefulWidget {
 class _WeatherScreenState extends State<WeatherScreen> {
   late final WeatherRepository _repository =
       widget.repository ?? WeatherRepository();
-  WeatherCondition? _condition;
+  Weather? _weather;
 
   void _reload() {
-    try {
-      final condition = _repository.fetch();
-      setState(() => _condition = condition);
-    } on WeatherError catch (error) {
-      // 取得に失敗したときは、表示中の天気を残したまま理由を伝える。
-      unawaited(
-        showDialog<void>(
-          context: context,
-          builder: (_) => WeatherErrorDialog(error: error),
-        ),
-      );
+    switch (_repository.fetch()) {
+      case Ok(value: final weather):
+        setState(() => _weather = weather);
+      case Err(:final error):
+        // 取得に失敗したときは、表示中の天気を残したまま理由を伝える。
+        unawaited(
+          showDialog<void>(
+            context: context,
+            builder: (_) => WeatherErrorDialog(error: error),
+          ),
+        );
     }
   }
 
@@ -57,7 +57,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
         children: [
           LayoutId(
             id: _Slot.panel,
-            child: WeatherPanel(condition: _condition),
+            child: WeatherPanel(weather: _weather),
           ),
           LayoutId(
             id: _Slot.buttons,
