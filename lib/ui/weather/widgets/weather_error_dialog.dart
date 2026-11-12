@@ -20,6 +20,7 @@ class WeatherErrorDialog extends StatelessWidget {
       title: const Text('天気を取得できませんでした'),
       content: Text(switch (error) {
         WeatherError.invalidParameter => '地域の指定が正しくありません。',
+        WeatherError.invalidResponse => '天気の情報を読み取れませんでした。',
         WeatherError.unknown => '時間をおいて、もう一度お試しください。',
       }),
       actions: [

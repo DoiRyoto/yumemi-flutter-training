@@ -3,5 +3,7 @@ include: package:yumemi_lints/flutter/3.41/recommended.yaml
 analyzer:
   exclude:
     - build/**
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
     - android/**
     - ios/**

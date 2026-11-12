@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_training/data/repositories/weather_repository.dart';
+import 'package:flutter_training/ui/weather/widgets/temperature_labels.dart';
 import 'package:flutter_training/ui/weather/widgets/weather_panel.dart';
 import 'package:flutter_training/ui/weather/widgets/weather_screen.dart';
 import 'package:yumemi_weather/yumemi_weather.dart';
@@ -12,7 +13,7 @@ import '../../../helpers/fake_yumemi_weather.dart';
 Future<void> _pumpWeatherScreen(
   WidgetTester tester, {
   Size? size,
-  List<Object> results = const ['sunny'],
+  List<Object>? results,
 }) async {
   if (size != null) {
     tester.view
@@ -24,11 +25,19 @@ Future<void> _pumpWeatherScreen(
   await tester.pumpWidget(
     MaterialApp(
       home: WeatherScreen(
-        repository: WeatherRepository(client: FakeYumemiWeather(results)),
+        repository: WeatherRepository(
+          client: FakeYumemiWeather(results ?? [weatherJson()]),
+        ),
       ),
     ),
   );
 }
+
+/// 最低気温と最高気温のラベル。この順に並ぶ。
+final Finder _temperatures = find.descendant(
+  of: find.byType(TemperatureLabels),
+  matching: find.byType(Text),
+);
 
 Future<void> _tapReload(WidgetTester tester) async {
   await tester.tap(find.widgetWithText(TextButton, 'Reload'));
@@ -43,14 +52,29 @@ void main() {
 
     expect(find.byType(Placeholder), findsOneWidget);
     expect(find.byType(SvgPicture), findsNothing);
+    expect(find.text('** ℃'), findsNWidgets(2));
   });
 
-  testWidgets('Reload をタップすると天気の画像を表示する', (tester) async {
-    await _pumpWeatherScreen(tester, size: phone);
+  testWidgets('Reload をタップすると天気の画像と気温を表示する', (tester) async {
+    await _pumpWeatherScreen(
+      tester,
+      size: phone,
+      results: [weatherJson(condition: 'cloudy', min: 3, max: 18)],
+    );
     await _tapReload(tester);
 
     expect(find.byType(Placeholder), findsNothing);
-    expect(find.byType(SvgPicture), findsOneWidget);
+    final image = tester.widget<SvgPicture>(find.byType(SvgPicture));
+    expect(
+      image.bytesLoader,
+      isA<SvgAssetLoader>().having(
+        (loader) => loader.assetName,
+        'assetName',
+        'assets/images/cloudy.svg',
+      ),
+    );
+    expect(tester.widget<Text>(_temperatures.at(0)).data, '3 ℃');
+    expect(tester.widget<Text>(_temperatures.at(1)).data, '18 ℃');
   });
 
   group('API のエラー', () {
@@ -95,7 +119,7 @@ void main() {
       await _pumpWeatherScreen(
         tester,
         size: phone,
-        results: ['sunny', YumemiWeatherError.unknown],
+        results: [weatherJson(), YumemiWeatherError.unknown],
       );
       await _tapReload(tester);
       await _tapReload(tester);
@@ -122,8 +146,8 @@ void main() {
 
         final panel = tester.getRect(find.byType(WeatherPanel));
         final image = tester.getRect(find.byType(AspectRatio));
-        final minLabel = tester.getRect(find.text('** ℃').at(0));
-        final maxLabel = tester.getRect(find.text('** ℃').at(1));
+        final minLabel = tester.getRect(_temperatures.at(0));
+        final maxLabel = tester.getRect(_temperatures.at(1));
         final buttons = tester.getRect(
           find
               .ancestor(
