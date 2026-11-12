@@ -1,24 +1,52 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_training/data/repositories/weather_repository.dart';
 import 'package:flutter_training/domain/models/weather_condition.dart';
+import 'package:flutter_training/domain/models/weather_error.dart';
 import 'package:flutter_training/ui/weather/widgets/action_buttons.dart';
+import 'package:flutter_training/ui/weather/widgets/weather_error_dialog.dart';
 import 'package:flutter_training/ui/weather/widgets/weather_panel.dart';
 import 'package:go_router/go_router.dart';
 
 /// 天気予報の画面。
 class WeatherScreen extends StatefulWidget {
-  const WeatherScreen({super.key});
+  const WeatherScreen({this.repository, super.key});
+
+  /// 天気の取得元。省略すると [WeatherRepository] の既定の実装を使う。
+  final WeatherRepository? repository;
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties.add(
+      DiagnosticsProperty<WeatherRepository>('repository', repository),
+    );
+  }
 
   @override
   State<WeatherScreen> createState() => _WeatherScreenState();
 }
 
 class _WeatherScreenState extends State<WeatherScreen> {
-  final _repository = WeatherRepository();
+  late final WeatherRepository _repository =
+      widget.repository ?? WeatherRepository();
   WeatherCondition? _condition;
 
   void _reload() {
-    setState(() => _condition = _repository.fetch());
+    try {
+      final condition = _repository.fetch();
+      setState(() => _condition = condition);
+    } on WeatherError catch (error) {
+      // 取得に失敗したときは、表示中の天気を残したまま理由を伝える。
+      unawaited(
+        showDialog<void>(
+          context: context,
+          builder: (_) => WeatherErrorDialog(error: error),
+        ),
+      );
+    }
   }
 
   @override
