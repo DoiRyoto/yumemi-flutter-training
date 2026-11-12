@@ -16,26 +16,16 @@ jobs:
         with:
           fetch-depth: 0
 
-      # https://github.com/kuhnroyal/flutter-fvm-config-action
-      - name: Fetch flutter config
-        uses: kuhnroyal/flutter-fvm-config-action@34c3905bc939a4ff9d9cb07d5a977493fa73b2aa
-        id: fvm-config-action
-
-      # https://github.com/subosito/flutter-action
+      # https://github.com/jdx/mise-action
       - name: Setup flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ steps.fvm-config-action.outputs.FLUTTER_VERSION }}
-          channel: ${{ steps.fvm-config-action.outputs.FLUTTER_CHANNEL }}
-          cache: true
-          cache-key: ${{ steps.fvm-config-action.outputs.FLUTTER_VERSION }}-${{ steps.fvm-config-action.outputs.FLUTTER_CHANNEL }}
+        uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5.1.2
 
       # https://github.com/actions/cache
       - name: Cache dependencies
         uses: actions/cache@v3
         with:
           path: |
-            ${{ env.PUB_CACHE }}
+            ~/.pub-cache
             ${{ github.workspace }}/.packages
             ${{ github.workspace }}/.flutter-plugins
             ${{ github.workspace }}/.flutter-plugin-dependencies
